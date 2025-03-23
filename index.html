@@ -49,18 +49,23 @@
           return;
         }
 
-        // Google Apps Script로 데이터 전송
-        const response = await fetch(
-          "AKfycbxEWXl7GklHB7u8uCdpVSVbrV2YEyjMrkzsfawD2JrHd4HhNGGv7d4bjL_WmfwA8B1AUg", // 배포된 웹 앱 URL로 변경
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productCode, actionType, quantity }),
-          }
-        );
+        try {
+          // Google Apps Script로 데이터 전송
+          const response = await fetch(
+            "https://script.google.com/macros/s/AKfycbxEWXl7GklHB7u8uCdpVSVbrV2YEyjMrkzsfawD2JrHd4HhNGGv7d4bjL_WmfwA8B1AUg/exec", // 배포된 웹 앱 URL로 변경
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ productCode, actionType, quantity }),
+            }
+          );
 
-        const result = await response.text();
-        alert(result);
+          const result = await response.text();
+          alert(result);
+        } catch (error) {
+          console.error("데이터 전송 중 오류 발생:", error);
+          alert("데이터 전송 중 오류가 발생했습니다.");
+        }
       }
     </script>
   </head>
