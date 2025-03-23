@@ -40,9 +40,11 @@
               name: "Live",
               type: "LiveStream",
               target: document.querySelector("#scanner"), // 카메라 출력 영역
-              constraints: {
-                facingMode: "environment", // 후면 카메라 사용
-              },
+                constraints: {
+                facingMode: "environment", // 후면 카메라
+                width: { min: 640 }, // 최소 해상도 설정
+                height: { min: 480 },
+                },
             },
             decoder: {
               readers: ["code_128_reader", "ean_reader", "ean_8_reader"], // 지원하는 바코드 형식
@@ -69,7 +71,7 @@
 
       // 버튼 클릭 시 데이터 전송
       async function sendBarcodeData(actionType) {
-        const productCode = document.getElementById("barcode").value;
+        const productCode = document.getElementById("barcode").value.trim();
         const quantity = parseInt(document.getElementById("quantity").value) || 1;
 
         if (!productCode) {
@@ -78,9 +80,8 @@
         }
 
         try {
-          // Google Apps Script로 데이터 전송
           const response = await fetch(
-            "https://script.google.com/macros/s/AKfycbxEWXl7GklHB7u8uCdpVSVbrV2YEyjMrkzsfawD2JrHd4HhNGGv7d4bjL_WmfwA8B1AUg/exec", // 배포된 웹 앱 URL로 변경
+            "https://script.google.com/macros/s/AKfycbz0mcsnHl452kTy-QiURAH2_Sb48Ncve7EVIsHOFTZf7cj9sYyrzhiyHPpUz1sIik8v0A/exec", // 배포된 웹 앱 URL로 변경
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -88,11 +89,16 @@
             }
           );
 
+          if (!response.ok) {
+            throw new Error(`HTTP 오류! 상태 코드: ${response.status}`);
+          }
+
           const result = await response.text();
+          console.log("서버 응답:", result);
           alert(result);
         } catch (error) {
           console.error("데이터 전송 중 오류 발생:", error);
-          alert("데이터 전송 중 오류가 발생했습니다.");
+          alert("데이터 전송 중 오류가 발생했습니다. 네트워크 상태를 확인하세요.");
         }
       }
     </script>
