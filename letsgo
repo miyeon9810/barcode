@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>QR/바코드 스캔</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+      // QuaggaJS를 사용하여 바코드 스캔
+      function startBarcodeScanner() {
+        Quagga.init(
+          {
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: document.querySelector("#scanner"), // 카메라 출력 영역
+              constraints: {
+                facingMode: "environment", // 후면 카메라 사용
+              },
+            },
+            decoder: {
+              readers: ["code_128_reader", "ean_reader", "ean_8_reader"], // 지원하는 바코드 형식
+            },
+          },
+          function (err) {
+            if (err) {
+              console.error(err);
+              alert("카메라 초기화에 실패했습니다.");
+              return;
+            }
+            Quagga.start();
+          }
+        );
+
+        // 바코드가 감지되었을 때 실행
+        Quagga.onDetected(function (result) {
+          const productCode = result.codeResult.code; // 바코드 값
+          document.getElementById("barcode").value = productCode; // 입력 필드에 값 설정
+          Quagga.stop(); // 스캔 중지
+          alert("바코드 스캔 성공: " + productCode);
+        });
+      }
+
+      // 버튼 클릭 시 데이터 전송
+      async function sendBarcodeData(actionType) {
+        const productCode = document.getElementById("barcode").value;
+        const quantity = parseInt(document.getElementById("quantity").value) || 1;
+
+        if (!productCode) {
+          alert("상품 코드를 입력하세요!");
+          return;
+        }
+
+        // Google Apps Script로 데이터 전송
+        const response = await fetch(
+          "AKfycbxEWXl7GklHB7u8uCdpVSVbrV2YEyjMrkzsfawD2JrHd4HhNGGv7d4bjL_WmfwA8B1AUg", // 배포된 웹 앱 URL로 변경
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productCode, actionType, quantity }),
+          }
+        );
+
+        const result = await response.text();
+        alert(result);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>QR/바코드 스캔</h1>
+    <div id="scanner" style="width: 100%; height: 300px; border: 1px solid black;"></div>
+    <button onclick="startBarcodeScanner()">바코드 스캔 시작</button>
+    <br /><br />
+    <input type="text" id="barcode" placeholder="상품 코드를 입력하세요" />
+    <br />
+    <input type="number" id="quantity" placeholder="수량" min="1" />
+    <br /><br />
+    <!-- 작업 버튼 -->
+    <button onclick="sendBarcodeData('입고')">입고</button>
+    <button onclick="sendBarcodeData('출고')">출고</button>
+    <button onclick="sendBarcodeData('반품')">반품</button>
+    <button onclick="sendBarcodeData('하자')">하자</button>
+  </body>
+</html>
