@@ -3,6 +3,34 @@
   <head>
     <title>QR/바코드 스캔</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+      /* 카메라 출력 영역 스타일 */
+      #scanner {
+        position: relative;
+        width: 100%;
+        height: 300px;
+        border: 1px solid black;
+        z-index: 1; /* 카메라 오버레이의 z-index */
+      }
+
+      /* 버튼과 입력 필드 스타일 */
+      .controls {
+        position: relative;
+        z-index: 2; /* 버튼과 입력 필드를 카메라 위로 올림 */
+        margin-top: -50px; /* 카메라와 겹치지 않도록 조정 */
+        background-color: rgba(255, 255, 255, 0.8); /* 반투명 배경 */
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      /* 버튼 스타일 */
+      button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+    </style>
     <script>
       // QuaggaJS를 사용하여 바코드 스캔
       function startBarcodeScanner() {
@@ -71,17 +99,19 @@
   </head>
   <body>
     <h1>QR/바코드 스캔</h1>
-    <div id="scanner" style="width: 100%; height: 300px; border: 1px solid black;"></div>
-    <button onclick="startBarcodeScanner()">바코드 스캔 시작</button>
-    <br /><br />
-    <input type="text" id="barcode" placeholder="상품 코드를 입력하세요" />
-    <br />
-    <input type="number" id="quantity" placeholder="수량" min="1" />
-    <br /><br />
-    <!-- 작업 버튼 -->
-    <button onclick="sendBarcodeData('입고')">입고</button>
-    <button onclick="sendBarcodeData('출고')">출고</button>
-    <button onclick="sendBarcodeData('반품')">반품</button>
-    <button onclick="sendBarcodeData('하자')">하자</button>
+    <!-- 카메라 출력 영역 -->
+    <div id="scanner"></div>
+
+    <!-- 버튼과 입력 필드 -->
+    <div class="controls">
+      <input type="text" id="barcode" placeholder="상품 코드를 입력하세요" />
+      <br />
+      <input type="number" id="quantity" placeholder="수량" min="1" />
+      <br /><br />
+      <button onclick="sendBarcodeData('입고')">입고</button>
+      <button onclick="sendBarcodeData('출고')">출고</button>
+      <button onclick="sendBarcodeData('반품')">반품</button>
+      <button onclick="sendBarcodeData('하자')">하자</button>
+    </div>
   </body>
 </html>
