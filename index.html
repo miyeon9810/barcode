@@ -1,123 +1,94 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>QR/바코드 스캔</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <style>
-      /* 카메라 출력 영역 스타일 */
-      #scanner {
-        position: relative;
-        width: 100%;
-        height: 300px;
-        border: 1px solid black;
-        z-index: 1; /* 카메라 오버레이의 z-index */
-      }
+<head>
+  <title>바코드 입출고</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <style>
+    #scanner {
+      width: 100%;
+      height: 300px;
+      border: 1px solid black;
+    }
+    .controls {
+      margin-top: 10px;
+    }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>바코드 입출고 기록</h1>
+  <div id="scanner"></div>
 
-      /* 버튼과 입력 필드 스타일 */
-      .controls {
-        position: relative;
-        z-index: 2; /* 버튼과 입력 필드를 카메라 위로 올림 */
-        margin-top: -50px; /* 카메라와 겹치지 않도록 조정 */
-        background-color: rgba(255, 255, 255, 0.8); /* 반투명 배경 */
-        padding: 10px;
-        border-radius: 5px;
-      }
+  <div class="controls">
+    <input type="text" id="barcode" placeholder="상품 코드" />
+    <input type="number" id="quantity" placeholder="수량" min="1" value="1" />
+    <br />
+    <button onclick="sendBarcodeData('입고')">입고</button>
+    <button onclick="sendBarcodeData('출고')">출고</button>
+    <button onclick="sendBarcodeData('반품')">반품</button>
+    <button onclick="sendBarcodeData('하자')">하자</button>
+  </div>
 
-      /* 버튼 스타일 */
-      button {
-        margin: 5px;
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-    </style>
-    <script>
-      // QuaggaJS를 사용하여 바코드 스캔
-      function startBarcodeScanner() {
-        Quagga.init(
-          {
-            inputStream: {
-              name: "Live",
-              type: "LiveStream",
-              target: document.querySelector("#scanner"), // 카메라 출력 영역
-                constraints: {
-                facingMode: "environment", // 후면 카메라
-                width: { min: 640 }, // 최소 해상도 설정
-                height: { min: 480 },
-                },
-            },
-            decoder: {
-              readers: ["code_128_reader", "ean_reader", "ean_8_reader"], // 지원하는 바코드 형식
-            },
-          },
-          function (err) {
-            if (err) {
-              console.error(err);
-              alert("카메라 초기화에 실패했습니다.");
-              return;
-            }
-            Quagga.start();
-          }
-        );
-
-        // 바코드가 감지되었을 때 실행
-        Quagga.onDetected(function (result) {
-          const productCode = result.codeResult.code; // 바코드 값
-          document.getElementById("barcode").value = productCode; // 입력 필드에 값 설정
-          Quagga.stop(); // 스캔 중지
-          alert("바코드 스캔 성공: " + productCode);
-        });
-      }
-
-      // 버튼 클릭 시 데이터 전송
-      async function sendBarcodeData(actionType) {
-        const productCode = document.getElementById("barcode").value.trim();
-        const quantity = parseInt(document.getElementById("quantity").value) || 1;
-
-        if (!productCode) {
-          alert("상품 코드를 입력하세요!");
+  <script>
+    // 카메라 시작
+    function startBarcodeScanner() {
+      Quagga.init({
+        inputStream: {
+          name: "Live",
+          type: "LiveStream",
+          target: document.querySelector("#scanner"),
+          constraints: { facingMode: "environment" }
+        },
+        decoder: {
+          readers: ["code_128_reader", "ean_reader", "ean_8_reader"]
+        }
+      }, function(err) {
+        if (err) {
+          console.error(err);
+          alert("카메라 오류");
           return;
         }
+        Quagga.start();
+      });
 
-        try {
-          const response = await fetch(
-            "https://script.google.com/macros/s/AKfycbz0mcsnHl452kTy-QiURAH2_Sb48Ncve7EVIsHOFTZf7cj9sYyrzhiyHPpUz1sIik8v0A/exec", // 배포된 웹 앱 URL로 변경
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ productCode, actionType, quantity }),
-            }
-          );
+      Quagga.onDetected(function(result) {
+        const code = result.codeResult.code;
+        document.getElementById("barcode").value = code;
+        Quagga.stop();
+        alert("스캔 완료: " + code);
+      });
+    }
 
-          if (!response.ok) {
-            throw new Error(`HTTP 오류! 상태 코드: ${response.status}`);
-          }
+    startBarcodeScanner();
 
-          const result = await response.text();
-          console.log("서버 응답:", result);
-          alert(result);
-        } catch (error) {
-          console.error("데이터 전송 중 오류 발생:", error);
-          alert("데이터 전송 중 오류가 발생했습니다. 네트워크 상태를 확인하세요.");
-        }
+    // 데이터 전송
+    async function sendBarcodeData(actionType) {
+      const productCode = document.getElementById("barcode").value.trim();
+      const quantity = parseInt(document.getElementById("quantity").value) || 1;
+
+      if (!productCode) {
+        alert("상품 코드를 입력하세요");
+        return;
       }
-    </script>
-  </head>
-  <body>
-    <h1>QR/바코드 스캔</h1>
-    <!-- 카메라 출력 영역 -->
-    <div id="scanner"></div>
 
-    <!-- 버튼과 입력 필드 -->
-    <div class="controls">
-      <input type="text" id="barcode" placeholder="상품 코드를 입력하세요" />
-      <br />
-      <input type="number" id="quantity" placeholder="수량" min="1" />
-      <br /><br />
-      <button onclick="sendBarcodeData('입고')">입고</button>
-      <button onclick="sendBarcodeData('출고')">출고</button>
-      <button onclick="sendBarcodeData('반품')">반품</button>
-      <button onclick="sendBarcodeData('하자')">하자</button>
-    </div>
-  </body>
+      try {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbyYx07COo8OfZFVMqWMuSE5vaUzPF2m80qyfoVxLx5F6pN-YmkldnxG02QmfeyszhLxMA/exec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productCode, actionType, quantity })
+        });
+
+        const text = await response.text();
+        alert(text);
+      } catch (err) {
+        console.error("전송 실패:", err);
+        alert("데이터 전송 중 오류 발생");
+      }
+    }
+  </script>
+</body>
 </html>
